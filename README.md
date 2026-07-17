@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/AlexNiny/create-foc-app/master/assets/create-foc-app-logo.png" alt="create-foc-app logo" width="240" />
+  <img src="https://raw.githubusercontent.com/AlexNiny/create-foc-app/master/assets/logo.png" alt="create-foc-app logo" width="240" />
 </p>
 
 # create-foc-app
