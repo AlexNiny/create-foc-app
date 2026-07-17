@@ -1,33 +1,37 @@
 # create-foc-app
 
+[![npm version](https://img.shields.io/npm/v/create-foc-app.svg)](https://www.npmjs.com/package/create-foc-app)
+[![npm downloads](https://img.shields.io/npm/dm/create-foc-app.svg)](https://www.npmjs.com/package/create-foc-app)
+[![license](https://img.shields.io/npm/l/create-foc-app.svg)](LICENSE)
+
 Scaffold a working Filecoin Onchain Cloud application in one command.
 
-`create-foc-app` is a FOC-native developer utility built for the FilecoinTLDR Builder Challenge Cycle 3. It generates a Next.js + TypeScript starter with a real Synapse SDK integration, safe wallet handling, Filecoin Pay readiness, multi-provider storage receipts, retrieval verification, and an offline-first `foc:doctor`.
+[`create-foc-app`](https://www.npmjs.com/package/create-foc-app) is a FOC-native developer utility built for the FilecoinTLDR Builder Challenge Cycle 3. It generates a Next.js + TypeScript starter with a real Synapse SDK integration, safe wallet handling, Filecoin Pay readiness, multi-provider storage receipts, retrieval verification, and an offline-first `foc:doctor`.
 
 ## Quick start
 
-Once published:
+```bash
+npx create-foc-app@latest my-app
+cd my-app
+npm run foc:doctor
+npm run dev
+```
+
+Requires Node.js 20.10 or newer. Calibration is the default network. The generated browser app uses an injected wallet and never embeds a private key in client code.
+
+You can also use the npm initializer form:
 
 ```bash
 npm create foc-app@latest my-app
-cd my-app
-npm run foc:doctor
-npm run dev
 ```
 
-From this repository:
+Choose a network and package manager explicitly when needed:
 
 ```bash
-npm install
-npm run build
-node dist/cli.js my-app --no-install
-cd my-app
-npm install
-npm run foc:doctor
-npm run dev
+npx create-foc-app@latest my-app \
+  --network calibration \
+  --package-manager pnpm
 ```
-
-Calibration is the default network. The generated browser app uses an injected wallet and never embeds a private key in client code.
 
 ## What gets generated
 
@@ -45,7 +49,7 @@ Calibration is the default network. The generated browser app uses an injected w
 ## CLI
 
 ```text
-create-foc-app [target-directory] [options]
+npx create-foc-app@latest [target-directory] [options]
 
 -y, --yes                         Use safe defaults
 --no-install                      Skip dependency installation
@@ -71,9 +75,12 @@ This makes Filecoin's storage, payment, provider, dataset, and verification prim
 
 ## Development
 
+Run the CLI directly from this repository:
+
 ```bash
 npm install
 npm run build
+node dist/cli.js my-app --no-install
 npm run typecheck
 npm test
 npm pack --dry-run
