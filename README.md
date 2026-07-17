@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="https://raw.githubusercontent.com/AlexNiny/create-foc-app/master/assets/create-foc-app-logo.png" alt="create-foc-app logo" width="240" />
+</p>
+
 # create-foc-app
 
 [![npm version](https://img.shields.io/npm/v/create-foc-app.svg)](https://www.npmjs.com/package/create-foc-app)
