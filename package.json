@@ -1,0 +1,39 @@
+{
+  "name": "create-foc-app",
+  "version": "0.1.0",
+  "description": "Scaffold a Filecoin Onchain Cloud app in one command.",
+  "keywords": [
+    "filecoin",
+    "filecoin-onchain-cloud",
+    "synapse",
+    "scaffolding",
+    "nextjs"
+  ],
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "create-foc-app": "dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "template/default",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=20.10"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "lint": "tsc --noEmit -p tsconfig.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "npm run build && node --test test/*.test.mjs",
+    "prepack": "npm run build"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.30",
+    "typescript": "^5.8.3"
+  }
+}
