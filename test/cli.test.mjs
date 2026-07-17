@@ -5,9 +5,10 @@ import path from "node:path";
 import test from "node:test";
 import { spawn } from "node:child_process";
 
-import { formatHelp, parseArgs } from "../dist/args.js";
+import { detectPackageManager, formatHelp, parseArgs } from "../dist/args.js";
 import { assertTargetDirectoryEmpty, assertTemplateExists } from "../dist/filesystem.js";
-import { manualInstallCommand } from "../dist/install.js";
+import { initializeGitRepository } from "../dist/git.js";
+import { manualInstallCommand, shellQuote } from "../dist/install.js";
 import { validateProjectName } from "../dist/project-name.js";
 import { scaffoldProject, resolveTemplateDir } from "../dist/template.js";
 
@@ -18,10 +19,11 @@ async function makeTempDir(prefix = "create-foc-app-") {
 }
 
 test("parseArgs applies defaults and flags", () => {
-  assert.deepEqual(parseArgs(["demo"]), {
+  assert.deepEqual(parseArgs(["demo"], "npm"), {
     target: "demo",
     yes: false,
     install: true,
+    initializeGit: true,
     packageManager: "npm",
     network: "calibration",
     help: false,
@@ -31,7 +33,8 @@ test("parseArgs applies defaults and flags", () => {
   assert.deepEqual(
     parseArgs([
       "--yes",
-      "--no-install",
+      "--skip-install",
+      "--no-git",
       "--package-manager",
       "pnpm",
       "--network",
@@ -41,6 +44,7 @@ test("parseArgs applies defaults and flags", () => {
       target: "foc-app",
       yes: true,
       install: false,
+      initializeGit: false,
       packageManager: "pnpm",
       network: "mainnet",
       help: false,
@@ -49,10 +53,18 @@ test("parseArgs applies defaults and flags", () => {
   );
 });
 
+test("detectPackageManager recognizes common npm user agents", () => {
+  assert.equal(detectPackageManager("pnpm/10.0.0 npm/? node/v22"), "pnpm");
+  assert.equal(detectPackageManager("yarn/4.1.0 npm/? node/v22"), "yarn");
+  assert.equal(detectPackageManager("unknown/1.0"), "npm");
+});
+
 test("formatHelp includes primary flags", () => {
   const help = formatHelp();
   assert.match(help, /--package-manager <name>/);
   assert.match(help, /--network <name>/);
+  assert.match(help, /--git \/ --no-git/);
+  assert.match(help, /--no-install, --skip-install/);
 });
 
 test("validateProjectName rejects invalid names", () => {
@@ -105,11 +117,12 @@ test("scaffoldProject maps dotfiles and replaces placeholders", async () => {
     targetDir,
     projectName: "demo-app",
     network: "mainnet",
+    packageManager: "pnpm",
   });
 
   assert.equal(
     await fs.readFile(path.join(targetDir, "README.md"), "utf8"),
-    "# demo-app\n\nNetwork: mainnet\n",
+    "# demo-app\n\nNetwork: mainnet\n\nPackage manager: pnpm\nInstall: pnpm install\nRun: pnpm run\n",
   );
   assert.equal(await fs.readFile(path.join(targetDir, ".gitignore"), "utf8"), "node_modules\n");
   assert.equal(
@@ -140,6 +153,7 @@ test("scaffoldProject refuses symlinked template entries", async () => {
       targetDir,
       projectName: "demo-app",
       network: "calibration",
+      packageManager: "npm",
     }),
     /Refusing to copy symlinked template entry/,
   );
@@ -154,12 +168,22 @@ test("production template renders a complete FOC starter", async () => {
     targetDir,
     projectName: "real-starter",
     network: "calibration",
+    packageManager: "yarn",
   });
 
   const generatedPackage = JSON.parse(
     await fs.readFile(path.join(targetDir, "package.json"), "utf8"),
   );
   assert.equal(generatedPackage.name, "real-starter");
+  assert.match(generatedPackage.scripts.check, /^yarn foc:doctor/);
+  assert.equal(generatedPackage.scripts["foc:doctor:online"], "node scripts/foc-doctor.mjs --online");
+  const generatedReadme = await fs.readFile(path.join(targetDir, "README.md"), "utf8");
+  assert.match(generatedReadme, /yarn install/);
+  assert.match(generatedReadme, /yarn foc:doctor/);
+  assert.doesNotMatch(generatedReadme, /__(?:PACKAGE_MANAGER|PM_INSTALL|PM_RUN)__/);
+  const generatedAgentGuide = await fs.readFile(path.join(targetDir, "AGENTS.md"), "utf8");
+  assert.match(generatedAgentGuide, /yarn typecheck/);
+  assert.doesNotMatch(generatedAgentGuide, /__PM_RUN__/);
   assert.equal(generatedPackage.dependencies["@filoz/synapse-sdk"], "1.1.0");
   assert.equal(
     await fs.readFile(path.join(targetDir, ".env.example"), "utf8").then((value) => value.split("\n")[0]),
@@ -173,8 +197,15 @@ test("production template renders a complete FOC starter", async () => {
 test("manualInstallCommand quotes target paths safely", () => {
   assert.equal(
     manualInstallCommand("npm", "/tmp/space dir"),
-    'cd "/tmp/space dir" && npm install',
+    "cd '/tmp/space dir' && npm install",
   );
+  assert.equal(shellQuote("/tmp/$HOME/it's-safe"), "'/tmp/$HOME/it'\\''s-safe'");
+});
+
+test("initializeGitRepository creates repository metadata", async () => {
+  const dir = await makeTempDir();
+  assert.equal(await initializeGitRepository(dir), true);
+  await assert.doesNotReject(fs.access(path.join(dir, ".git")));
 });
 
 test("cli smoke scaffolds with --no-install", async () => {
@@ -185,7 +216,7 @@ test("cli smoke scaffolds with --no-install", async () => {
   const result = await new Promise((resolve) => {
     const child = spawn(
       process.execPath,
-      [cliPath, targetName, "--network", "mainnet", "--no-install"],
+      [cliPath, targetName, "--network", "mainnet", "--no-install", "--no-git"],
       {
         cwd: workspace,
         env: {
@@ -215,7 +246,7 @@ test("cli smoke scaffolds with --no-install", async () => {
   assert.match(result.stdout, /Skipped dependency installation/);
   assert.equal(
     await fs.readFile(path.join(workspace, targetName, "README.md"), "utf8"),
-    "# smoke-app\n\nNetwork: mainnet\n",
+    "# smoke-app\n\nNetwork: mainnet\n\nPackage manager: npm\nInstall: npm install\nRun: npm run\n",
   );
 });
 
@@ -226,7 +257,7 @@ test("cli preserves files and prints recovery command when package manager is mi
   const result = await new Promise((resolve) => {
     const child = spawn(
       process.execPath,
-      [cliPath, "missing-pm-app", "--package-manager", "pnpm"],
+      [cliPath, "missing-pm-app", "--package-manager", "pnpm", "--no-git"],
       {
         cwd: workspace,
         env: {

@@ -3,7 +3,8 @@ import path from "node:path";
 import process from "node:process";
 import { formatHelp, parseArgs } from "./args.js";
 import { assertTargetDirectoryEmpty, assertTemplateExists } from "./filesystem.js";
-import { manualInstallCommand, installDependencies } from "./install.js";
+import { initializeGitRepository } from "./git.js";
+import { manualInstallCommand, installDependencies, shellQuote } from "./install.js";
 import { readPackageVersion } from "./package-json.js";
 import { validateProjectName } from "./project-name.js";
 import { promptForProjectName } from "./prompt.js";
@@ -75,9 +76,17 @@ export async function run(): Promise<void> {
     targetDir,
     projectName,
     network: options.network,
+    packageManager: options.packageManager,
   });
 
   console.log(`Scaffolded ${projectName} at ${relativeTarget(targetDir)}.`);
+
+  if (options.initializeGit) {
+    const initialized = await initializeGitRepository(targetDir);
+    console.log(initialized ? "Initialized an empty Git repository." : "Skipped Git initialization because git is unavailable.");
+  } else {
+    console.log("Skipped Git initialization.");
+  }
 
   if (!options.install) {
     console.log("Skipped dependency installation.");
@@ -100,7 +109,7 @@ export async function run(): Promise<void> {
   console.log("");
   console.log("Success.");
   console.log(
-    `Next: cd ${JSON.stringify(relativeTarget(targetDir))} && ${formatRunScriptCommand(options.packageManager, "foc:doctor")}`,
+    `Next: cd ${shellQuote(relativeTarget(targetDir))} && ${formatRunScriptCommand(options.packageManager, "foc:doctor")}`,
   );
 }
 

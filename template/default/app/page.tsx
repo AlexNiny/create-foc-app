@@ -1,12 +1,13 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import {
   configuredNetwork,
   connectWallet,
   prepareStorage,
   retrieveAndVerify,
+  subscribeWalletChanges,
   uploadPayload,
 } from "@/lib/foc/adapter";
 import type {
@@ -18,6 +19,7 @@ import type {
 import {
   describeError,
   MIN_UPLOAD_BYTES,
+  safeHttpUrl,
   toPayloadBytes,
 } from "@/lib/foc/verify";
 
@@ -32,6 +34,15 @@ function shortAddress(address: string): string {
   return `${address.slice(0, 8)}…${address.slice(-6)}`;
 }
 
+function RetrievalLink({ url }: { url: string }) {
+  const safeUrl = safeHttpUrl(url);
+  return safeUrl ? (
+    <a href={safeUrl} target="_blank" rel="noreferrer">Retrieval URL ↗</a>
+  ) : (
+    <small>Provider did not return a safe HTTP retrieval URL.</small>
+  );
+}
+
 export default function Home() {
   const [session, setSession] = useState<FocSession | null>(null);
   const [payload, setPayload] = useState(INITIAL_PAYLOAD);
@@ -41,11 +52,22 @@ export default function Home() {
   const [active, setActive] = useState<Action | null>(null);
   const [message, setMessage] = useState("Ready. Connect a wallet to begin.");
   const originalBytes = useRef<Uint8Array | null>(null);
+  const walletRevision = useRef(0);
 
   const bytes = useMemo(() => toPayloadBytes(payload), [payload]);
   const network = configuredNetwork();
   const validSize = bytes.byteLength >= MIN_UPLOAD_BYTES;
   const isPrepared = preparation?.dataSize === bytes.byteLength;
+
+  useEffect(() => subscribeWalletChanges(() => {
+    walletRevision.current += 1;
+    setSession(null);
+    setPreparation(null);
+    setReceipt(null);
+    setVerification(null);
+    originalBytes.current = null;
+    setMessage("Wallet account or network changed. Reconnect to continue safely.");
+  }), []);
 
   async function run(action: Action, operation: () => Promise<void>) {
     setActive(action);
@@ -63,6 +85,12 @@ export default function Home() {
       throw new Error("Connect a wallet before using Filecoin Onchain Cloud.");
     }
     return session;
+  }
+
+  function assertWalletUnchanged(revision: number) {
+    if (walletRevision.current !== revision) {
+      throw new Error("Wallet account or network changed during the operation. Reconnect and try again.");
+    }
   }
 
   return (
@@ -92,6 +120,7 @@ export default function Home() {
               {network === "calibration"
                 ? "Calibration requires tFIL for gas and tUSDFC for storage."
                 : "Mainnet uses real FIL for gas and USDFC for storage—review every transaction."}
+              {" "}<a href="https://docs.filecoin.cloud/getting-started/" target="_blank" rel="noreferrer">Funding guide ↗</a>
             </p>
             <button
               onClick={() => run("connect", async () => {
@@ -121,6 +150,7 @@ export default function Home() {
             <textarea
               id="payload"
               value={payload}
+              disabled={active !== null}
               onChange={(event) => {
                 setPayload(event.target.value);
                 setPreparation(null);
@@ -135,10 +165,13 @@ export default function Home() {
               className="secondary"
               onClick={() => run("prepare", async () => {
                 if (!validSize) throw new Error(`Payload must be at least ${MIN_UPLOAD_BYTES} bytes.`);
+                const revision = walletRevision.current;
+                const currentSession = requireSession();
                 setPreparation(null);
-                const result = await prepareStorage(requireSession(), bytes.byteLength, (hash) => {
+                const result = await prepareStorage(currentSession, bytes.byteLength, (hash) => {
                   setMessage(`Preparation transaction submitted: ${hash}`);
                 });
+                assertWalletUnchanged(revision);
                 setPreparation(result);
                 setMessage(result.transactionHash ? "Storage funding and approval confirmed." : "Account is already ready for this upload.");
               })}
@@ -165,8 +198,11 @@ export default function Home() {
               onClick={() => run("upload", async () => {
                 if (!validSize) throw new Error(`Payload must be at least ${MIN_UPLOAD_BYTES} bytes.`);
                 if (!isPrepared) throw new Error("Prepare storage for the current payload before uploading.");
+                const revision = walletRevision.current;
+                const currentSession = requireSession();
                 const snapshot = new Uint8Array(bytes);
-                const result = await uploadPayload(requireSession(), snapshot);
+                const result = await uploadPayload(currentSession, snapshot);
+                assertWalletUnchanged(revision);
                 originalBytes.current = snapshot;
                 setReceipt(result);
                 setVerification(null);
@@ -191,7 +227,7 @@ export default function Home() {
                       <span>{copy.role}</span>
                       <strong>Provider {copy.providerId}</strong>
                       <small>Dataset {copy.dataSetId} · Piece {copy.pieceId}</small>
-                      <a href={copy.retrievalUrl} target="_blank" rel="noreferrer">Retrieval URL ↗</a>
+                      <RetrievalLink url={copy.retrievalUrl} />
                     </div>
                   ))}
                 </div>
@@ -220,7 +256,10 @@ export default function Home() {
               className="secondary"
               onClick={() => run("verify", async () => {
                 if (!receipt || !originalBytes.current) throw new Error("Store a payload before verifying it.");
-                const result = await retrieveAndVerify(requireSession(), receipt.pieceCid, originalBytes.current);
+                const revision = walletRevision.current;
+                const currentSession = requireSession();
+                const result = await retrieveAndVerify(currentSession, receipt.pieceCid, originalBytes.current);
+                assertWalletUnchanged(revision);
                 setVerification(result);
                 setMessage(result.matchesOriginal ? "Retrieval verified byte for byte." : "Retrieved bytes do not match the original payload.");
               })}
@@ -238,7 +277,7 @@ export default function Home() {
         </article>
       </section>
 
-      <footer>
+      <footer role="status" aria-live="polite">
         <span className="statusLabel">STATUS</span>
         <p>{message}</p>
         <a href="https://docs.filecoin.cloud/" target="_blank" rel="noreferrer">FOC documentation ↗</a>

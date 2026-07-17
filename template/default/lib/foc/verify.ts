@@ -18,6 +18,15 @@ export function toPayloadBytes(payload: string): Uint8Array {
   return new TextEncoder().encode(payload);
 }
 
+export function safeHttpUrl(value: string): string | null {
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" || url.protocol === "http:" ? url.href : null;
+  } catch {
+    return null;
+  }
+}
+
 export function describeError(error: unknown): string {
   if (error instanceof Error) {
     return error.message;

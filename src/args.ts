@@ -11,6 +11,13 @@ const PACKAGE_MANAGERS: ReadonlySet<string> = new Set([
 
 const NETWORKS: ReadonlySet<string> = new Set(["calibration", "mainnet"]);
 
+export function detectPackageManager(
+  userAgent = process.env.npm_config_user_agent,
+): PackageManager {
+  const name = userAgent?.split("/")[0];
+  return PACKAGE_MANAGERS.has(name ?? "") ? (name as PackageManager) : "npm";
+}
+
 function takeValue(argv: string[], index: number, flag: string): string {
   const value = argv[index + 1];
   if (!value || value.startsWith("-")) {
@@ -20,11 +27,15 @@ function takeValue(argv: string[], index: number, flag: string): string {
   return value;
 }
 
-export function parseArgs(argv: string[]): CliOptions {
+export function parseArgs(
+  argv: string[],
+  defaultPackageManager = detectPackageManager(),
+): CliOptions {
   const options: CliOptions = {
     yes: false,
     install: true,
-    packageManager: "npm",
+    initializeGit: true,
+    packageManager: defaultPackageManager,
     network: DEFAULT_NETWORK as FilecoinNetwork,
     help: false,
     version: false,
@@ -58,7 +69,14 @@ export function parseArgs(argv: string[]): CliOptions {
         options.yes = true;
         break;
       case "--no-install":
+      case "--skip-install":
         options.install = false;
+        break;
+      case "--git":
+        options.initializeGit = true;
+        break;
+      case "--no-git":
+        options.initializeGit = false;
         break;
       case "--package-manager": {
         const value = takeValue(argv, index, arg);
@@ -111,7 +129,8 @@ export function formatHelp(): string {
     "",
     "Options:",
     "  -y, --yes                        Use safe defaults",
-    "  --no-install                    Skip dependency installation",
+    "  --no-install, --skip-install    Skip dependency installation",
+    "  --git / --no-git                Enable or skip Git initialization",
     "  --package-manager <name>        npm | pnpm | yarn | bun",
     "  --network <name>                calibration | mainnet",
     "  -h, --help                      Show this help message",

@@ -30,7 +30,8 @@ Choose a network and package manager explicitly when needed:
 ```bash
 npx create-foc-app@latest my-app \
   --network calibration \
-  --package-manager pnpm
+  --package-manager pnpm \
+  --git
 ```
 
 ## What gets generated
@@ -43,6 +44,7 @@ npx create-foc-app@latest my-app \
 - JSON-safe receipts with PieceCID, provider, dataset, and piece identifiers
 - Retrieval and byte-for-byte verification
 - `npm run foc:doctor` for safe offline readiness checks
+- `npm run foc:doctor:online` for read-only RPC, chain ID, and balance checks
 - `npm run foc:smoke-test` for an explicit, funded Calibration upload/retrieval test
 - Tests, ESLint, type checking, a production build, and AI-agent guidance
 
@@ -53,6 +55,8 @@ npx create-foc-app@latest [target-directory] [options]
 
 -y, --yes                         Use safe defaults
 --no-install                      Skip dependency installation
+--skip-install                    Alias for --no-install
+--git / --no-git                 Enable or skip Git initialization
 --package-manager <name>          npm | pnpm | yarn | bun
 --network <name>                  calibration | mainnet
 -h, --help                        Show help
@@ -84,9 +88,10 @@ node dist/cli.js my-app --no-install
 npm run typecheck
 npm test
 npm pack --dry-run
+npm run test:e2e
 ```
 
-The live smoke test is intentionally excluded from CI because it needs a funded Calibration wallet and external storage providers. Offline tests and generated-project builds require no wallet credentials.
+CI validates Node.js 20 and 22, audits dependencies, and installs the packed tarball into a clean consumer before running the generated project's full check suite. The live smoke test remains excluded because it needs a funded Calibration wallet and external storage providers.
 
 ## Security model
 
@@ -98,9 +103,9 @@ The live smoke test is intentionally excluded from CI because it needs a funded 
 
 ## Project documentation
 
-- [`docs/DEMO.md`](docs/DEMO.md) — deterministic and live demo paths
-- [`docs/AI_BUILD_LOG.md`](docs/AI_BUILD_LOG.md) — how AI assisted the build
-- [`docs/SUBMISSION.md`](docs/SUBMISSION.md) — challenge criteria and submission checklist
+- [Demo guide](https://github.com/AlexNiny/create-foc-app/blob/master/docs/DEMO.md) — deterministic and live demo paths
+- [AI build log](https://github.com/AlexNiny/create-foc-app/blob/master/docs/AI_BUILD_LOG.md) — how AI assisted the build
+- [Submission guide](https://github.com/AlexNiny/create-foc-app/blob/master/docs/SUBMISSION.md) — challenge criteria and submission checklist
 
 ## License
 

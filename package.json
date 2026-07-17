@@ -1,6 +1,6 @@
 {
   "name": "create-foc-app",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Scaffold a Filecoin Onchain Cloud app in one command.",
   "keywords": [
     "filecoin",
@@ -10,6 +10,14 @@
     "nextjs"
   ],
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AlexNiny/create-foc-app.git"
+  },
+  "homepage": "https://github.com/AlexNiny/create-foc-app#readme",
+  "bugs": {
+    "url": "https://github.com/AlexNiny/create-foc-app/issues"
+  },
   "type": "module",
   "bin": {
     "create-foc-app": "dist/cli.js"
@@ -17,6 +25,7 @@
   "files": [
     "dist",
     "template/default",
+    "docs",
     "LICENSE"
   ],
   "publishConfig": {
@@ -27,13 +36,18 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "lint": "tsc --noEmit -p tsconfig.json",
+    "lint": "eslint .",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "npm run build && node --test test/*.test.mjs",
+    "test:e2e": "node scripts/verify-packed.mjs",
     "prepack": "npm run build"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@types/node": "^22.15.30",
+    "eslint": "^10.7.0",
+    "globals": "^17.7.0",
+    "typescript-eslint": "^8.64.0",
     "typescript": "^5.8.3"
   }
 }

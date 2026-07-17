@@ -7,6 +7,9 @@ export const TEMPLATE_OVERRIDE_ENV = "CREATE_FOC_APP_TEMPLATE_DIR";
 export const PLACEHOLDERS = {
   projectName: "__PROJECT_NAME__",
   network: "__FOC_NETWORK__",
+  packageManager: "__PACKAGE_MANAGER__",
+  packageManagerInstall: "__PM_INSTALL__",
+  packageManagerRun: "__PM_RUN__",
 } as const;
 
 export function getPackageRoot(fromUrl: string): string {

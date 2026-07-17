@@ -13,8 +13,9 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "tsx --test tests/*.test.ts",
-    "check": "npm run foc:doctor && npm run lint && npm run typecheck && npm test && npm run build",
+    "check": "__PM_RUN__ foc:doctor && __PM_RUN__ lint && __PM_RUN__ typecheck && __PM_RUN__ test && __PM_RUN__ build",
     "foc:doctor": "node scripts/foc-doctor.mjs",
+    "foc:doctor:online": "node scripts/foc-doctor.mjs --online",
     "foc:smoke-test": "node scripts/foc-smoke-test.mjs"
   },
   "dependencies": {

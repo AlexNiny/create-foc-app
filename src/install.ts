@@ -18,7 +18,7 @@ export function manualInstallCommand(
   packageManager: PackageManager,
   targetDir: string,
 ): string {
-  const quotedTarget = JSON.stringify(targetDir);
+  const quotedTarget = shellQuote(targetDir);
   switch (packageManager) {
     case "npm":
       return `cd ${quotedTarget} && npm install`;
@@ -29,6 +29,10 @@ export function manualInstallCommand(
     case "bun":
       return `cd ${quotedTarget} && bun install`;
   }
+}
+
+export function shellQuote(value: string): string {
+  return `'${value.replaceAll("'", `'\\''`)}'`;
 }
 
 export async function installDependencies(

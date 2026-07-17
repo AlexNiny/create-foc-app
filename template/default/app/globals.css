@@ -93,6 +93,8 @@ textarea { width: 100%; resize: vertical; padding: 16px; border: 1px solid var(-
 textarea:focus { outline: 2px solid var(--lime); outline-offset: 1px; }
 .warning { color: #8b4f22; font-size: 13px; }
 .networkHint { max-width: 620px; padding-left: 12px; border-left: 3px solid var(--lime); color: var(--green); font-size: 13px; }
+.networkHint a { color: inherit; font-weight: 700; }
+textarea:disabled { cursor: wait; opacity: .7; }
 
 .resultLine { display: flex; justify-content: space-between; max-width: 420px; margin-top: 18px; padding: 12px 0; border-top: 1px solid var(--line); font-family: monospace; }
 .resultLine span { color: var(--green); }

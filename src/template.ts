@@ -40,9 +40,16 @@ function mapEntryName(name: string): string {
 }
 
 function replaceTokens(input: string, options: ScaffoldOptions): string {
+  const packageManagerRun = options.packageManager === "yarn"
+    ? "yarn"
+    : `${options.packageManager} run`;
+
   return input
     .replaceAll(PLACEHOLDERS.projectName, options.projectName)
-    .replaceAll(PLACEHOLDERS.network, options.network);
+    .replaceAll(PLACEHOLDERS.network, options.network)
+    .replaceAll(PLACEHOLDERS.packageManager, options.packageManager)
+    .replaceAll(PLACEHOLDERS.packageManagerInstall, `${options.packageManager} install`)
+    .replaceAll(PLACEHOLDERS.packageManagerRun, packageManagerRun);
 }
 
 function shouldTransformFile(destinationPath: string): boolean {

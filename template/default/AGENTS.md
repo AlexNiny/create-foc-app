@@ -14,11 +14,11 @@ This is a `create-foc-app` Filecoin Onchain Cloud starter.
 ## Verification after changes
 
 ```bash
-npm run foc:doctor
-npm run lint
-npm run typecheck
-npm test
-npm run build
+__PM_RUN__ foc:doctor
+__PM_RUN__ lint
+__PM_RUN__ typecheck
+__PM_RUN__ test
+__PM_RUN__ build
 ```
 
-Run `npm run foc:smoke-test` only with a funded, disposable Calibration account.
+Run `__PM_RUN__ foc:smoke-test` only with a funded, disposable Calibration account.

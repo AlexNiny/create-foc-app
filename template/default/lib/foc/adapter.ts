@@ -39,6 +39,69 @@ function requireInjectedWallet() {
   return window.ethereum;
 }
 
+function errorCode(error: unknown): number | undefined {
+  if (typeof error !== "object" || error === null || !("code" in error)) {
+    return undefined;
+  }
+
+  const code = Number(error.code);
+  return Number.isFinite(code) ? code : undefined;
+}
+
+async function switchToChain(
+  provider: ReturnType<typeof requireInjectedWallet>,
+  chain: typeof mainnet | typeof calibration,
+): Promise<void> {
+  const chainId = `0x${chain.id.toString(16)}`;
+
+  try {
+    await provider.request({
+      method: "wallet_switchEthereumChain",
+      params: [{ chainId }],
+    });
+  } catch (error) {
+    if (errorCode(error) !== 4902) {
+      throw error;
+    }
+
+    const explorerUrl = chain.blockExplorers?.default.url;
+    await provider.request({
+      method: "wallet_addEthereumChain",
+      params: [{
+        chainId,
+        chainName: chain.name,
+        nativeCurrency: chain.nativeCurrency,
+        rpcUrls: [...chain.rpcUrls.default.http],
+        ...(explorerUrl ? { blockExplorerUrls: [explorerUrl] } : {}),
+      }],
+    });
+    await provider.request({
+      method: "wallet_switchEthereumChain",
+      params: [{ chainId }],
+    });
+  }
+}
+
+type WalletEventProvider = ReturnType<typeof requireInjectedWallet> & {
+  on?: (event: "accountsChanged" | "chainChanged", listener: () => void) => void;
+  removeListener?: (event: "accountsChanged" | "chainChanged", listener: () => void) => void;
+};
+
+export function subscribeWalletChanges(onChange: () => void): () => void {
+  if (typeof window === "undefined" || !window.ethereum) {
+    return () => undefined;
+  }
+
+  const provider = window.ethereum as WalletEventProvider;
+  provider.on?.("accountsChanged", onChange);
+  provider.on?.("chainChanged", onChange);
+
+  return () => {
+    provider.removeListener?.("accountsChanged", onChange);
+    provider.removeListener?.("chainChanged", onChange);
+  };
+}
+
 export async function connectWallet(): Promise<FocSession> {
   const provider = requireInjectedWallet();
   const accounts = await provider.request({ method: "eth_requestAccounts" });
@@ -55,10 +118,7 @@ export async function connectWallet(): Promise<FocSession> {
 
   if (currentChainId.toLowerCase() !== expectedChainId.toLowerCase()) {
     try {
-      await provider.request({
-        method: "wallet_switchEthereumChain",
-        params: [{ chainId: expectedChainId }],
-      });
+      await switchToChain(provider, chain);
     } catch (error) {
       throw new Error(
         `Switch the wallet to Filecoin ${network} (chain ${chain.id}) and reconnect.`,

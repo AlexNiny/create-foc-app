@@ -1,7 +1,8 @@
 node_modules/
 dist/
-docs/
 *.tgz
 .DS_Store
+.idea/
 coverage/
 .omx
+.idea
