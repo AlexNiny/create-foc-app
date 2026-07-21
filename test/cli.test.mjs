@@ -26,6 +26,7 @@ test("parseArgs applies defaults and flags", () => {
     initializeGit: true,
     packageManager: "npm",
     network: "calibration",
+    template: "next",
     help: false,
     version: false,
   });
@@ -47,9 +48,18 @@ test("parseArgs applies defaults and flags", () => {
       initializeGit: false,
       packageManager: "pnpm",
       network: "mainnet",
+      template: "next",
       help: false,
       version: false,
     },
+  );
+});
+
+test("parseArgs selects the React template explicitly", () => {
+  assert.equal(parseArgs(["demo", "--template", "react"]).template, "react");
+  assert.throws(
+    () => parseArgs(["demo", "--template", "vue"]),
+    /Unsupported template "vue"\. Expected next or react/,
   );
 });
 
@@ -63,6 +73,7 @@ test("formatHelp includes primary flags", () => {
   const help = formatHelp();
   assert.match(help, /--package-manager <name>/);
   assert.match(help, /--network <name>/);
+  assert.match(help, /--template <name>/);
   assert.match(help, /--git \/ --no-git/);
   assert.match(help, /--no-install, --skip-install/);
 });
@@ -105,6 +116,18 @@ test("resolveTemplateDir ignores overrides outside tests", () => {
     assert.notEqual(resolveTemplateDir(import.meta.url), fixtureTemplate);
   } finally {
     delete process.env.CREATE_FOC_APP_TEMPLATE_DIR;
+    if (previousNodeEnv === undefined) delete process.env.NODE_ENV;
+    else process.env.NODE_ENV = previousNodeEnv;
+  }
+});
+
+test("resolveTemplateDir keeps Next.js as default and resolves React separately", () => {
+  const previousNodeEnv = process.env.NODE_ENV;
+  process.env.NODE_ENV = "production";
+  try {
+    assert.match(resolveTemplateDir(import.meta.url), /template[/\\]default$/);
+    assert.match(resolveTemplateDir(import.meta.url, "react"), /template[/\\]react$/);
+  } finally {
     if (previousNodeEnv === undefined) delete process.env.NODE_ENV;
     else process.env.NODE_ENV = previousNodeEnv;
   }
@@ -192,6 +215,36 @@ test("production template renders a complete FOC starter", async () => {
   await assert.doesNotReject(fs.access(path.join(targetDir, "lib/foc/adapter.ts")));
   await assert.doesNotReject(fs.access(path.join(targetDir, "scripts/foc-doctor.mjs")));
   await assert.doesNotReject(fs.access(path.join(targetDir, "scripts/foc-smoke-test.mjs")));
+});
+
+test("React template renders a complete Vite FOC starter", async () => {
+  const dir = await makeTempDir();
+  const targetDir = path.join(dir, "react-starter");
+  const productionTemplate = path.resolve("template/react");
+
+  await scaffoldProject(productionTemplate, {
+    targetDir,
+    projectName: "react-starter",
+    network: "mainnet",
+    packageManager: "pnpm",
+  });
+
+  const generatedPackage = JSON.parse(
+    await fs.readFile(path.join(targetDir, "package.json"), "utf8"),
+  );
+  assert.equal(generatedPackage.name, "react-starter");
+  assert.equal(generatedPackage.scripts.dev, "vite");
+  assert.match(generatedPackage.scripts.check, /^pnpm run foc:doctor/);
+  assert.equal(generatedPackage.dependencies["@filoz/synapse-sdk"], "1.1.0");
+  assert.equal(generatedPackage.devDependencies.vite, "6.4.3");
+  assert.equal(
+    await fs.readFile(path.join(targetDir, ".env.example"), "utf8").then((value) => value.split("\n")[0]),
+    "VITE_FILECOIN_NETWORK=mainnet",
+  );
+  await assert.doesNotReject(fs.access(path.join(targetDir, "src", "App.tsx")));
+  await assert.doesNotReject(fs.access(path.join(targetDir, "src", "lib", "foc", "adapter.ts")));
+  await assert.doesNotReject(fs.access(path.join(targetDir, "vite.config.ts")));
+  await assert.rejects(fs.access(path.join(targetDir, "next.config.ts")));
 });
 
 test("manualInstallCommand quotes target paths safely", () => {

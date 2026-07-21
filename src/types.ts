@@ -1,5 +1,6 @@
 export type PackageManager = "npm" | "pnpm" | "yarn" | "bun";
 export type FilecoinNetwork = "calibration" | "mainnet";
+export type AppTemplate = "next" | "react";
 
 export interface CliOptions {
   target?: string;
@@ -8,6 +9,7 @@ export interface CliOptions {
   initializeGit: boolean;
   packageManager: PackageManager;
   network: FilecoinNetwork;
+  template: AppTemplate;
   help: boolean;
   version: boolean;
 }

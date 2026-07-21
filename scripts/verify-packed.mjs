@@ -28,7 +28,6 @@ try {
   if (!tarballName) throw new Error("npm pack did not produce a tarball.");
 
   const consumerDir = path.join(temporaryRoot, "consumer");
-  const generatedDir = path.join(consumerDir, "generated-app");
   await fs.mkdir(consumerDir);
   await fs.writeFile(
     path.join(consumerDir, "package.json"),
@@ -37,22 +36,38 @@ try {
   );
 
   await run(npmCommand, ["install", path.join(temporaryRoot, tarballName)], consumerDir);
-  await run(
-    process.execPath,
-    [
-      path.join(consumerDir, "node_modules", "create-foc-app", "dist", "cli.js"),
-      "generated-app",
-      "--no-install",
-      "--no-git",
-    ],
+  const cliPath = path.join(
     consumerDir,
+    "node_modules",
+    "create-foc-app",
+    "dist",
+    "cli.js",
   );
-  await run(npmCommand, ["install"], generatedDir);
-  await run(npmCommand, ["run", "check"], generatedDir);
-  if (process.env.CREATE_FOC_APP_VERIFY_ONLINE === "1") {
-    await run(npmCommand, ["run", "foc:doctor:online"], generatedDir);
+  const consumers = [
+    { directory: "generated-next-app", templateArgs: [] },
+    { directory: "generated-react-app", templateArgs: ["--template", "react"] },
+  ];
+
+  for (const consumer of consumers) {
+    const generatedDir = path.join(consumerDir, consumer.directory);
+    await run(
+      process.execPath,
+      [
+        cliPath,
+        consumer.directory,
+        ...consumer.templateArgs,
+        "--no-install",
+        "--no-git",
+      ],
+      consumerDir,
+    );
+    await run(npmCommand, ["install"], generatedDir);
+    await run(npmCommand, ["run", "check"], generatedDir);
+    if (process.env.CREATE_FOC_APP_VERIFY_ONLINE === "1") {
+      await run(npmCommand, ["run", "foc:doctor:online"], generatedDir);
+    }
   }
-  console.log("Packed consumer verification passed.");
+  console.log("Packed Next.js and React consumer verification passed.");
 } finally {
   await fs.rm(temporaryRoot, { recursive: true, force: true });
 }

@@ -1,5 +1,14 @@
-import { DEFAULT_NETWORK, DEFAULT_PROJECT_NAME } from "./constants.js";
-import type { CliOptions, FilecoinNetwork, PackageManager } from "./types.js";
+import {
+  DEFAULT_NETWORK,
+  DEFAULT_PROJECT_NAME,
+  DEFAULT_TEMPLATE,
+} from "./constants.js";
+import type {
+  AppTemplate,
+  CliOptions,
+  FilecoinNetwork,
+  PackageManager,
+} from "./types.js";
 import { CliError } from "./errors.js";
 
 const PACKAGE_MANAGERS: ReadonlySet<string> = new Set([
@@ -10,6 +19,7 @@ const PACKAGE_MANAGERS: ReadonlySet<string> = new Set([
 ]);
 
 const NETWORKS: ReadonlySet<string> = new Set(["calibration", "mainnet"]);
+const TEMPLATES: ReadonlySet<string> = new Set(["next", "react"]);
 
 export function detectPackageManager(
   userAgent = process.env.npm_config_user_agent,
@@ -37,6 +47,7 @@ export function parseArgs(
     initializeGit: true,
     packageManager: defaultPackageManager,
     network: DEFAULT_NETWORK as FilecoinNetwork,
+    template: DEFAULT_TEMPLATE as AppTemplate,
     help: false,
     version: false,
   };
@@ -100,6 +111,17 @@ export function parseArgs(
         index += 1;
         break;
       }
+      case "--template": {
+        const value = takeValue(argv, index, arg);
+        if (!TEMPLATES.has(value)) {
+          throw new CliError(
+            `Unsupported template "${value}". Expected next or react.`,
+          );
+        }
+        options.template = value as AppTemplate;
+        index += 1;
+        break;
+      }
       case "--help":
       case "-h":
         options.help = true;
@@ -133,11 +155,13 @@ export function formatHelp(): string {
     "  --git / --no-git                Enable or skip Git initialization",
     "  --package-manager <name>        npm | pnpm | yarn | bun",
     "  --network <name>                calibration | mainnet",
+    "  --template <name>               next | react (default: next)",
     "  -h, --help                      Show this help message",
     "  -v, --version                   Show the current version",
     "",
     "Examples:",
     `  create-foc-app ${DEFAULT_PROJECT_NAME}`,
     `  create-foc-app ${DEFAULT_PROJECT_NAME} --network mainnet`,
+    `  create-foc-app ${DEFAULT_PROJECT_NAME} --template react`,
   ].join("\n");
 }

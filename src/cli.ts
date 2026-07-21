@@ -69,7 +69,7 @@ export async function run(): Promise<void> {
 
   await assertTargetDirectoryEmpty(targetDir);
 
-  const templateDir = resolveTemplateDir(import.meta.url);
+  const templateDir = resolveTemplateDir(import.meta.url, options.template);
   await assertTemplateExists(templateDir);
 
   await scaffoldProject(templateDir, {

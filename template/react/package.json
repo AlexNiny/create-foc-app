@@ -1,0 +1,45 @@
+{
+  "name": "__PROJECT_NAME__",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20.10"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test tests/*.test.ts",
+    "check": "__PM_RUN__ foc:doctor && __PM_RUN__ lint && __PM_RUN__ typecheck && __PM_RUN__ test && __PM_RUN__ build",
+    "foc:doctor": "node scripts/foc-doctor.mjs",
+    "foc:doctor:online": "node scripts/foc-doctor.mjs --online",
+    "foc:smoke-test": "node scripts/foc-smoke-test.mjs"
+  },
+  "dependencies": {
+    "@filoz/synapse-sdk": "1.1.0",
+    "react": "19.2.7",
+    "react-dom": "19.2.7",
+    "viem": "2.55.2"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "@types/node": "^22.15.30",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "@vitejs/plugin-react": "4.7.0",
+    "eslint": "^9.39.1",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.4.24",
+    "globals": "^16.5.0",
+    "tsx": "^4.20.3",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.48.0",
+    "vite": "6.4.3"
+  },
+  "overrides": {
+    "postcss": "^8.5.10"
+  }
+}

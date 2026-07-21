@@ -10,7 +10,7 @@
 
 Scaffold a working Filecoin Onchain Cloud application in one command.
 
-[`create-foc-app`](https://www.npmjs.com/package/create-foc-app) is a FOC-native developer utility built for the FilecoinTLDR Builder Challenge Cycle 3. It generates a Next.js + TypeScript starter with a real Synapse SDK integration, safe wallet handling, Filecoin Pay readiness, multi-provider storage receipts, retrieval verification, and an offline-first `foc:doctor`.
+[`create-foc-app`](https://www.npmjs.com/package/create-foc-app) is a FOC-native developer utility built for the FilecoinTLDR Builder Challenge Cycle 3. It generates Next.js or Vite + React TypeScript starters with a real Synapse SDK integration, safe wallet handling, Filecoin Pay readiness, multi-provider storage receipts, retrieval verification, and an offline-first `foc:doctor`.
 
 ## Quick start
 
@@ -23,16 +23,23 @@ npm run dev
 
 Requires Node.js 20.10 or newer. Calibration is the default network. The generated browser app uses an injected wallet and never embeds a private key in client code.
 
+Next.js is the default template. Generate a Vite + React project explicitly:
+
+```bash
+npx create-foc-app@latest my-react-app --template react
+```
+
 You can also use the npm initializer form:
 
 ```bash
 npm create foc-app@latest my-app
 ```
 
-Choose a network and package manager explicitly when needed:
+Choose a template, network, and package manager explicitly when needed:
 
 ```bash
 npx create-foc-app@latest my-app \
+  --template react \
   --network calibration \
   --package-manager pnpm \
   --git
@@ -40,7 +47,7 @@ npx create-foc-app@latest my-app \
 
 ## What gets generated
 
-- Next.js App Router, React, and TypeScript
+- Next.js App Router by default, or Vite + React with `--template react`
 - `@filoz/synapse-sdk` and `viem`
 - Browser-wallet connection with Calibration/Mainnet configuration
 - Explicit storage preparation through Filecoin Pay
@@ -63,6 +70,7 @@ npx create-foc-app@latest [target-directory] [options]
 --git / --no-git                 Enable or skip Git initialization
 --package-manager <name>          npm | pnpm | yarn | bun
 --network <name>                  calibration | mainnet
+--template <name>                 next | react (default: next)
 -h, --help                        Show help
 -v, --version                     Show version
 ```
@@ -95,7 +103,7 @@ npm pack --dry-run
 npm run test:e2e
 ```
 
-CI validates Node.js 20 and 22, audits dependencies, and installs the packed tarball into a clean consumer before running the generated project's full check suite. The live smoke test remains excluded because it needs a funded Calibration wallet and external storage providers.
+CI validates Node.js 20 and 22, audits dependencies, and installs the packed tarball into clean Next.js and React consumers before running both generated projects' full check suites. The live smoke test remains excluded because it needs a funded Calibration wallet and external storage providers.
 
 ## Security model
 
@@ -104,12 +112,6 @@ CI validates Node.js 20 and 22, audits dependencies, and installs the packed tar
 - The generated doctor rejects public private-key environment variables.
 - Local `.env` files are ignored; only `.env.example` is committed.
 - Mainnet is never used by the live smoke test.
-
-## Project documentation
-
-- [Demo guide](https://github.com/AlexNiny/create-foc-app/blob/master/docs/DEMO.md) — deterministic and live demo paths
-- [AI build log](https://github.com/AlexNiny/create-foc-app/blob/master/docs/AI_BUILD_LOG.md) — how AI assisted the build
-- [Submission guide](https://github.com/AlexNiny/create-foc-app/blob/master/docs/SUBMISSION.md) — challenge criteria and submission checklist
 
 ## License
 

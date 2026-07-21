@@ -1,8 +1,13 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import { PLACEHOLDERS, TEMPLATE_OVERRIDE_ENV, getPackageRoot } from "./constants.js";
+import {
+  DEFAULT_TEMPLATE,
+  PLACEHOLDERS,
+  TEMPLATE_OVERRIDE_ENV,
+  getPackageRoot,
+} from "./constants.js";
 import { CliError } from "./errors.js";
-import type { ScaffoldOptions } from "./types.js";
+import type { AppTemplate, ScaffoldOptions } from "./types.js";
 
 const TEXT_FILE_EXTENSIONS = new Set([
   ".css",
@@ -61,13 +66,17 @@ function shouldTransformFile(destinationPath: string): boolean {
   return TEXT_FILE_EXTENSIONS.has(path.extname(destinationPath));
 }
 
-export function resolveTemplateDir(fromUrl: string): string {
+export function resolveTemplateDir(
+  fromUrl: string,
+  template: AppTemplate = DEFAULT_TEMPLATE,
+): string {
   const override = process.env[TEMPLATE_OVERRIDE_ENV];
   if (process.env.NODE_ENV === "test" && override) {
     return path.resolve(override);
   }
 
-  return path.join(getPackageRoot(fromUrl), "template", "default");
+  const directory = template === "react" ? "react" : "default";
+  return path.join(getPackageRoot(fromUrl), "template", directory);
 }
 
 async function copyEntry(

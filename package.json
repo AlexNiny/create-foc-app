@@ -1,13 +1,15 @@
 {
   "name": "create-foc-app",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Scaffold a Filecoin Onchain Cloud app in one command.",
   "keywords": [
     "filecoin",
     "filecoin-onchain-cloud",
     "synapse",
     "scaffolding",
-    "nextjs"
+    "nextjs",
+    "react",
+    "vite"
   ],
   "license": "MIT",
   "repository": {
@@ -25,6 +27,7 @@
   "files": [
     "dist",
     "template/default",
+    "template/react",
     "docs",
     "LICENSE"
   ],
